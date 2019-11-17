@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<svg baseProfile="full" height="850" version="1.1" width="1100" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <clipPath id="tile_clip">
+      <polygon points="0,0 80,0 80,40 40,40 40,80 0,80"/>
+    </clipPath>
+    <g clip-path="url(#tile_clip)" id="t1">
+      <polygon fill="#FAF3DD" points="0,0 80,0 80,40 40,40 40,80 0,80" stroke="rgb(0,0,0)" stroke-width="2"/>
+      <polygon fill="#C9D5B9" points="0,0 20.0,80 80,80 80,20.0" stroke="rgb(0,0,0)" stroke-width="2"/>
+      <polygon fill="#8FC0A9" points="40,40 0,20.0 0,0 20.0,0" stroke="rgb(0,0,0)" stroke-width="2"/>
+      <polygon fill="#696D7D" points="80,80 20.0,80 20.0,20.0 80.0,20.0" stroke="rgb(0,0,0)" stroke-width="2"/>
+      <polygon fill="#68B0AB" points="0,80 20.0,60.0 40,80.0" stroke="rgb(0,0,0)" stroke-width="2"/>
+      <polygon fill="#68B0AB" points="80,0 60.0,20.0 80.0,40" stroke="rgb(0,0,0)" stroke-width="2"/>
+      <polygon fill="#FAF3DD" points="0,0 80,0 80,40 40,40 40,80 0,80"/>
+      <polygon fill="#C9D5B9" points="0,0 20.0,80 80,80 80,20.0"/>
+      <polygon fill="#8FC0A9" points="40,40 0,20.0 0,0 20.0,0"/>
+      <polygon fill="#696D7D" points="80,80 20.0,80 20.0,20.0 80.0,20.0"/>
+      <polygon fill="#68B0AB" points="0,80 20.0,60.0 40,80.0"/>
+      <polygon fill="#68B0AB" points="80,0 60.0,20.0 80.0,40"/>
+    </g>
+    <g id="t1_n90">
+      <use transform="rotate(90,40,40) scale(-1,-1) translate(-80,-80)" x="0" xlink:href="#t1" y="0"/>
+    </g>
+    <g id="t1_90">
+      <use transform="rotate(-90,40,40) scale(-1,-1) translate(-80,-80)" x="0" xlink:href="#t1" y="0"/>
+    </g>
+    <g id="t2">
+      <use x="0" xlink:href="#t1" y="0"/>
+      <use x="40" xlink:href="#t1" y="40"/>
+      <use x="0" xlink:href="#t1_n90" y="80"/>
+      <use x="80" xlink:href="#t1_90" y="0"/>
+    </g>
+    <g id="t2_n90">
+      <use transform="rotate(90,80,80) scale(-1,-1) translate(-160,-160)" x="0" xlink:href="#t2" y="0"/>
+    </g>
+    <g id="t2_90">
+      <use transform="rotate(-90,80,80) scale(-1,-1) translate(-160,-160)" x="0" xlink:href="#t2" y="0"/>
+    </g>
+    <g id="t3">
+      <use x="0" xlink:href="#t2" y="0"/>
+      <use x="80" xlink:href="#t2" y="80"/>
+      <use x="0" xlink:href="#t2_n90" y="160"/>
+      <use x="160" xlink:href="#t2_90" y="0"/>
+    </g>
+    <g id="t3_n90">
+      <use transform="rotate(90,160,160) scale(-1,-1) translate(-320,-320)" x="0" xlink:href="#t3" y="0"/>
+    </g>
+    <g id="t3_90">
+      <use transform="rotate(-90,160,160) scale(-1,-1) translate(-320,-320)" x="0" xlink:href="#t3" y="0"/>
+    </g>
+    <g id="t4">
+      <use x="0" xlink:href="#t3" y="0"/>
+      <use x="160" xlink:href="#t3" y="160"/>
+      <use x="0" xlink:href="#t3_n90" y="320"/>
+      <use x="320" xlink:href="#t3_90" y="0"/>
+    </g>
+    <g id="t4_n90">
+      <use transform="rotate(90,320,320) scale(-1,-1) translate(-640,-640)" x="0" xlink:href="#t4" y="0"/>
+    </g>
+    <g id="t4_90">
+      <use transform="rotate(-90,320,320) scale(-1,-1) translate(-640,-640)" x="0" xlink:href="#t4" y="0"/>
+    </g>
+    <g id="t5">
+      <use x="0" xlink:href="#t4" y="0"/>
+      <use x="320" xlink:href="#t4" y="320"/>
+      <use x="0" xlink:href="#t4_n90" y="640"/>
+      <use x="640" xlink:href="#t4_90" y="0"/>
+    </g>
+    <g id="t5_n90">
+      <use transform="rotate(90,640,640) scale(-1,-1) translate(-1280,-1280)" x="0" xlink:href="#t5" y="0"/>
+    </g>
+    <g id="t5_90">
+      <use transform="rotate(-90,640,640) scale(-1,-1) translate(-1280,-1280)" x="0" xlink:href="#t5" y="0"/>
+    </g>
+    <g id="t6">
+      <use x="0" xlink:href="#t5" y="0"/>
+      <use x="640" xlink:href="#t5" y="640"/>
+      <use x="0" xlink:href="#t5_n90" y="1280"/>
+      <use x="1280" xlink:href="#t5_90" y="0"/>
+    </g>
+  </defs>
+  <rect fill="rgb(0,0,0)" height="100%" width="100%" x="0" y="0"/>
+  <use x="0" xlink:href="#t6" y="0"/>
+</svg>

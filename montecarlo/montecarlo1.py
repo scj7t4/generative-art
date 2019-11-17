@@ -2,6 +2,7 @@ import math
 import random
 
 import svgwrite
+from svgwrite.extensions import Inkscape
 
 page_width = 800
 page_height = 800
@@ -27,7 +28,7 @@ def mid_point(p1, p2):
     return (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
 
 
-def make_lines(drawing: svgwrite.Drawing, inpts):
+def make_lines(layer, drawing: svgwrite.Drawing, inpts):
     usage = {k: 0 for k in inpts}
     conn = 9
     preferred_dist = 5
@@ -47,7 +48,7 @@ def make_lines(drawing: svgwrite.Drawing, inpts):
         used_pairs.add((endpt, startpt))
         used_pairs.add((startpt, endpt))
         if distance(startpt, endpt) < 100:
-            drawing.add(drawing.line(
+            layer.add(drawing.line(
                 startpt,
                 endpt,
                 stroke=svgwrite.rgb(10, 10, 16, '%'),
@@ -57,7 +58,7 @@ def make_lines(drawing: svgwrite.Drawing, inpts):
             ))
 
 
-def make_lines2(drawing: svgwrite.Drawing, inpts):
+def make_lines2(layer, drawing: svgwrite.Drawing, inpts):
     tail = inpts
 
     while len(tail) > 1:
@@ -65,7 +66,7 @@ def make_lines2(drawing: svgwrite.Drawing, inpts):
 
         minpt = min(tail, key=lambda x: distance(x, head))
         if not in_circle(circle_radius, mid_point(head, minpt)) and distance(minpt, head) < 15:
-            drawing.add(drawing.line(
+            layer.add(drawing.line(
                 head,
                 minpt,
                 stroke=svgwrite.rgb(255, 10, 16, '%'),
@@ -76,6 +77,7 @@ def make_lines2(drawing: svgwrite.Drawing, inpts):
 
 def main():
     drawing = svgwrite.Drawing(filename='montecarlo1.svg', size=(page_width, page_height))
+    inkscape = Inkscape(drawing)
     inpts = []
     outpts = []
 
@@ -97,9 +99,14 @@ def main():
 
     # inpts.sort(key=lambda x: -distance((page_width/2, page_height/2), x))
     # outpts.sort(key=lambda x: distance((page_width/2, page_height/2), x))
+    in_layer = inkscape.layer(label='inside circle')
+    out_layer = inkscape.layer(label='outside circle')
 
-    make_lines(drawing, inpts)
-    make_lines2(drawing, outpts)
+    drawing.add(in_layer)
+    drawing.add(out_layer)
+
+    make_lines(in_layer, drawing, inpts)
+    make_lines2(out_layer, drawing, outpts)
     drawing.save()
 
 
