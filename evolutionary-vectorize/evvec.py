@@ -1,17 +1,24 @@
+import datetime
 import heapq
 import random
 import os
 import uuid
+from concurrent.futures.process import ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor
+from io import BytesIO
 
 import cairosvg
 import numpy
 import svgwrite
 from PIL import Image
+from stopwatch import Stopwatch
 from svgwrite.extensions import Inkscape
+
+THREAD_POOL = ProcessPoolExecutor(max_workers=4)
 
 PAPER_WIDTH = 550
 PAPER_HEIGHT = 425
-VECTOR_MANHATTAN_MAX = 10
+VECTOR_MANHATTAN_MAX = 25
 
 COLORS = [
     (23, 20, 15),
@@ -41,7 +48,7 @@ MAX_INITIAL_GENES = 2000
 
 
 def open_as_array(fname):
-    i = Image.open(fname)
+    i = Image.open(fname).convert('RGB')
     return numpy.asarray(i)
 
 
@@ -49,15 +56,15 @@ TARGET_ARRAY = open_as_array('bobross.png')
 
 
 def population_size(gen):
-    return 4000
+    return 100
 
 
 def allowed_to_recombine(gen):
-    return 200
+    return 100
 
 
 def parent_tournament_size(gen):
-    return 128
+    return 16
 
 
 def mutation_rate(gen):
@@ -111,40 +118,54 @@ class Allele:
 
     def __init__(self):
         self.start = (random.randint(0, PAPER_WIDTH), random.randint(0, PAPER_HEIGHT))
-        ex = max(min(0, self.start[0] + random.randint(-VECTOR_MANHATTAN_MAX, VECTOR_MANHATTAN_MAX)), PAPER_WIDTH)
-        ey = max(min(0, self.start[1] + random.randint(-VECTOR_MANHATTAN_MAX, VECTOR_MANHATTAN_MAX)), PAPER_HEIGHT)
+        ex = max(min(PAPER_WIDTH, self.start[0] + random.randint(-VECTOR_MANHATTAN_MAX, VECTOR_MANHATTAN_MAX)), 0)
+        ey = max(min(PAPER_HEIGHT, self.start[1] + random.randint(-VECTOR_MANHATTAN_MAX, VECTOR_MANHATTAN_MAX)), 0)
         self.end = (ex, ey)
         self.color = random.choice(COLORS)
 
 
 def compute_fitness(representation):
+    sw = Stopwatch()
+    sw.start()
+    drawing = unit_to_svg(representation)
+
+    # print("Adding all vectors took {}".format(sw.reset()))
+
+    xml = drawing.tostring()
+
+    # print("To xml took {}".format(sw.reset()))
+
+    image_data = cairosvg.surface.PNGSurface.convert(xml)
+    arr = open_as_array(BytesIO(image_data))
+
+    # print("Convert to png took {}".format(sw.reset()))
+
+    diff = numpy.abs(TARGET_ARRAY - arr)
+    diff = numpy.reshape(diff, PAPER_WIDTH * PAPER_HEIGHT * 3)
+    diff = diff * -1
+    # os.remove(fname)
+    avg = numpy.average(diff)
+
+    # print("Compute diff took {}".format(sw.reset()))
+
+    return avg
+
+
+def unit_to_svg(representation):
     drawing = svgwrite.Drawing(size=(PAPER_WIDTH, PAPER_HEIGHT))
     inkscape = Inkscape(drawing)
-
     layers = {}
     color_counter = 0
-
     for allele in representation:
         color = allele.color
         if color not in layers:
             layers[color] = inkscape.layer("{}".format(color_counter))
             color_counter += 1
+            drawing.add(layers[color])
         layer = layers[allele.color]
         svg_color = svgwrite.rgb(color[0], color[1], color[2])
         layer.add(drawing.line(allele.start, allele.end, stroke_width=5, stroke=svg_color))
-
-    xml = drawing.tostring()
-
-    fname = "./temp/" + uuid.uuid4().hex + ".png"
-    cairosvg.surface.PNGSurface.convert(xml, write_to=fname)
-    arr = open_as_array(fname)
-
-    diff = numpy.abs(TARGET_ARRAY - arr)
-    print(diff)
-    print(diff.shape)
-    diff = numpy.reshape((1, ))
-
-    return numpy.average(diff)
+    return drawing
 
 
 class Unit:
@@ -156,10 +177,12 @@ class Unit:
             self.representation = [Allele() for _ in range(random.randint(0, 2000))]
         else:
             self.representation = representation
+        self.representation.sort(key=lambda x: x.start[0] + x.start[1])
+        self._fitness = THREAD_POOL.submit(compute_fitness, self.representation)
 
     def recombine(self, other):
         crossovers = random.randint(1, 4)
-        a, b = k_crossover(crossovers, self.representation, other.represenation)
+        a, b = k_crossover(crossovers, self.representation, other.representation)
         return Unit(a), Unit(b)
 
     def mutate(self):
@@ -167,13 +190,17 @@ class Unit:
 
     @property
     def fitness(self):
-        if self._fitness is None:
-            self._fitness = compute_fitness(self.representation)
-
-        return self._fitness
+        return self._fitness.result()
 
     def __str__(self):
         return "{} Genes, {} Fitness".format(len(self.representation), self.fitness)
+
+    def to_svg(self):
+        return unit_to_svg(self.representation)
+
+
+def make_unit():
+    return Unit()
 
 
 def survivor_selection(pool_size, pool):
@@ -188,8 +215,10 @@ class Population:
         self.generation = generation
         pool_size = population_size(self.generation)
         if pool is None:
+            print("Generating Population...")
             self.pool = [Unit() for _ in range(pool_size)]
         else:
+            print("Survivor Selection...")
             self.pool = survivor_selection(pool_size, pool)
 
     def next_generation(self):
@@ -213,11 +242,27 @@ class Population:
     def __str__(self):
         return "Generation {} [ Best {} ]".format(self.generation, max(self.pool, key=lambda x: x.fitness))
 
+    def save_best(self):
+        best = max(self.pool, key=lambda x: x.fitness)
+        drawing = best.to_svg()
+        drawing.saveas('./tmp/gen-{}.svg'.format(self.generation))
+
 
 def main():
     pass
 
 
 if __name__ == "__main__":
-    os.makedirs("./tmp", exist_ok=True)
-    compute_fitness([])
+    sw = Stopwatch()
+    sw.start()
+    try:
+        os.makedirs("./tmp", exist_ok=True)
+        pop = Population()
+        print("Gen 0 took {} to init".format(sw.reset()))
+        for i in range(100):
+            print(pop)
+            pop.save_best()
+            pop = pop.next_generation()
+            print("Next gen took {}".format(sw.reset()))
+    finally:
+        THREAD_POOL.shutdown(wait=False)
