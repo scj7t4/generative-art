@@ -90,12 +90,13 @@ def mutate(sequence):
     action = random.choice(types)
     idx = random.randint(0, len(sequence))
 
-    if action == 'REPLACE':
+    if action == 'REPLACE' and idx < len(res):
         res[idx] = Allele()
-    elif action == 'DELETE':
+    elif action == 'DELETE' and idx < len(res):
         res.pop(idx)
     else:
         res.insert(idx, Allele())
+    return res
 
 
 def k_tournament_selection(candidates, k):
@@ -112,7 +113,6 @@ def top_k_selection(candidates, k):
 
 
 class Allele:
-    color = None
     start = None
     end = None
 
@@ -121,7 +121,6 @@ class Allele:
         ex = max(min(PAPER_WIDTH, self.start[0] + random.randint(-VECTOR_MANHATTAN_MAX, VECTOR_MANHATTAN_MAX)), 0)
         ey = max(min(PAPER_HEIGHT, self.start[1] + random.randint(-VECTOR_MANHATTAN_MAX, VECTOR_MANHATTAN_MAX)), 0)
         self.end = (ex, ey)
-        self.color = random.choice(COLORS)
 
 
 def compute_fitness(representation):
@@ -156,44 +155,54 @@ def unit_to_svg(representation):
     inkscape = Inkscape(drawing)
     layers = {}
     color_counter = 0
-    for allele in representation:
-        color = allele.color
+    for color in representation.keys():
         if color not in layers:
             layers[color] = inkscape.layer("{}".format(color_counter))
             color_counter += 1
             drawing.add(layers[color])
-        layer = layers[allele.color]
         svg_color = svgwrite.rgb(color[0], color[1], color[2])
-        layer.add(drawing.line(allele.start, allele.end, stroke_width=5, stroke=svg_color))
+        for allele in representation[color]:
+            layer = layers[color]
+            layer.add(drawing.line(allele.start, allele.end, stroke_width=5, stroke=svg_color))
     return drawing
 
 
 class Unit:
-    representation = []
+    representation = {}
     _fitness = None
 
     def __init__(self, representation=None):
         if representation is None:
-            self.representation = [Allele() for _ in range(random.randint(0, 2000))]
+            self.representation = {color: [Allele() for _ in range(random.randint(0, 200))] for color in COLORS}
         else:
             self.representation = representation
-        self.representation.sort(key=lambda x: x.start[0] + x.start[1])
+        #self._fitness = compute_fitness(self.representation)
         self._fitness = THREAD_POOL.submit(compute_fitness, self.representation)
 
     def recombine(self, other):
+        a_dict = {}
+        b_dict = {}
         crossovers = random.randint(1, 4)
-        a, b = k_crossover(crossovers, self.representation, other.representation)
-        return Unit(a), Unit(b)
+        for color in self.representation.keys():
+            a_dict[color], b_dict[color] = k_crossover(crossovers, self.representation[color],
+                                                       other.representation[color])
+        return Unit(a_dict), Unit(b_dict)
 
     def mutate(self):
-        return Unit(mutate(self.representation))
+        mutated = {}
+        for color in self.representation.keys():
+            mutated[color] = mutate(self.representation[color])
+        return Unit(mutated)
 
     @property
     def fitness(self):
         return self._fitness.result()
 
     def __str__(self):
-        return "{} Genes, {} Fitness".format(len(self.representation), self.fitness)
+        all_alleles = 0
+        for color in self.representation.keys():
+            all_alleles += len(self.representation[color])
+        return "{} Genes, {} Fitness".format(all_alleles, self.fitness)
 
     def to_svg(self):
         return unit_to_svg(self.representation)
