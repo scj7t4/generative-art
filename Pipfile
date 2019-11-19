@@ -9,7 +9,7 @@ verify_ssl = true
 svgwrite = "*"
 cairosvg = "*"
 numpy = "*"
-stopwatch-py = "*"
+colormath = "*"
 
 [requires]
 python_version = "3.7"
