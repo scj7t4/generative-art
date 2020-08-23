@@ -40,12 +40,19 @@ def main():
     d = drawing.circle(center=center_pt, r=out_circle_rad, stroke_width=1, stroke=svgwrite.rgb(0, 0, 0), fill='none')
     layer.add(d)
 
-    inner_circles_rad = [25, 40, 55, 70, 85, 100, 115]
+    inner_circles_rad = [150 - (20 * i) for i in range(1, 7)]
     circle_arm = (-3/4) * math.pi
 
-    for icr in inner_circles_rad:
-        cy = math.sin(circle_arm) * (out_circle_rad - icr)
-        cx = math.cos(circle_arm) * (out_circle_rad - icr)
+    cumu = -out_circle_rad
+
+    for c, icr in enumerate(inner_circles_rad):
+        m = 4
+        if c % 2 == 0:
+            m = -4
+
+        cumu -= icr * m
+        cy = math.sin(circle_arm) * (cumu)
+        cx = math.cos(circle_arm) * (cumu)
         center = rel_pt((cx, cy))
         c = drawing.circle(center=center, r=icr, stroke_width=1, stroke=svgwrite.rgb(0, 0, 0),
                            fill='none')
@@ -102,6 +109,8 @@ def main():
         uy = center_pt[1] - dy
         ln = drawing.line((x, y), (x, uy), stroke_width=1, stroke=svgwrite.rgb(0, 0, 0))
         layer.add(ln)
+
+        #cumu -= icr * m
 
     drawing.add(layer)
     drawing.add(cns)
